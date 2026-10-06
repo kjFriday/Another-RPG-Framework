@@ -2,18 +2,37 @@
 
 ## Where things stand
 
-- `src/object.rs` contains a pseudo-ECS:
-  - `EntityId` plays the role of an entity.
-  - `ObjectKind` plays the role of a marker component.
-  - `World` is a flat store with `spawn`, `get`, `of_kind` and `count`.
-- `src/game_loop.rs`: menu items carry a `MenuAction` enum (`Spawn(kind)`, `List(kind)`, `TogglePause`, `Quit`, `Unimplemented`). `RpgState::apply` runs the action.
-- The **Generate** tab already has an `Item / Map / Dungeon / Town / Overworld` button that spawns an empty object of that kind. Generators will put real content behind those buttons.
+- `src/world/` is a pseudo-ECS: `EntityId` plays the role of an
+  entity, `ObjectKind` a marker component, and `World` a flat store
+  with `spawn`, `spawn_generated`, `get`, `of_kind` and `count`.
+- Menu entries carry a `Command` (`src/command.rs`), and
+  `App::execute` (`src/app/input.rs`) carries it out.
+- Phase 1 is done: the **Generate** tab opens a slider panel
+  (`src/ui/panel.rs`) for each generator in `src/procgen/`.
 
-The plan has three phases. Each one ships on its own.
+The plan has three phases. Each one ships on its own. Sections 1.1 to
+1.5 are the original sketch, kept for reference; the notes directly
+below say where the built code differs.
 
 ---
 
-## Phase 1: Generators and parameter sliders (TUI only, no Bevy)
+## Phase 1: Generators and parameter sliders (TUI only, no Bevy) — DONE
+
+Built in `src/procgen/` and `src/ui/panel.rs`. It differs from the
+sketch below in four ways:
+
+- **Module name:** it's `procgen`, not `gen`, because `gen` is a
+  reserved keyword in Rust 2024.
+- **Randomness:** there's no `rand`/`noise` dependency. An in-crate
+  SplitMix64 RNG and value noise keep each seed's output stable
+  across dependency upgrades.
+- **Trait shape:** `Generator` is object-safe (`generate` returns
+  `ObjectData`) so `ObjectKind::generator` can return
+  `Box<dyn Generator>`.
+- **No Generate button:** the preview regenerates live on every
+  slider change, so only `[Reroll]` and `[Spawn]` remain.
+
+Not yet done: saving and loading recipes to disk (step 4 below). Recipes are stored on each `GameObject`, but nothing writes them out yet.
 
 ### 1.1 Generator trait
 
@@ -90,10 +109,11 @@ The mapping is mechanical because of the Phase 1 shapes:
 | `ObjectKind` | `#[derive(Component)]` enum (or one marker struct per kind) |
 | `ObjectData` variants | separate components (`ItemData`, `TileGrid`, …) |
 | `World` | `bevy_ecs::world::World` |
-| `MenuAction` | an event/message type consumed by a system |
-| `RpgState::tick` | a `Schedule` run once per tick |
+| `Command` | an event/message type consumed by a system |
+| `Simulation::tick` | a `Schedule` run once per tick |
 
-The loop stays in `EngineLoop::run`, which calls `schedule.run(&mut world)` on each tick.
+The loop stays in `App::run` (`src/app/mod.rs`), which calls
+`schedule.run(&mut world)` on each tick.
 
 ---
 

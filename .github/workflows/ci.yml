@@ -1,0 +1,30 @@
+# Continuous integration: GitHub runs this on every push and pull
+# request once the repo is hosted on GitHub. A red X on a commit means
+# one of the three checks below failed; click it to see which.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    # Build on Linux and Windows: the deploy module has
+    # Windows-only and non-Windows code paths (`#[cfg(target_os)]`),
+    # so each OS compiles code the other never sees.
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      # 1. Formatting matches rustfmt.toml (fails, never rewrites).
+      - run: cargo fmt --check
+      # 2. Lints. `-D warnings` turns every warning into an error.
+      - run: cargo clippy --all-targets -- -D warnings
+      # 3. Unit tests.
+      - run: cargo test

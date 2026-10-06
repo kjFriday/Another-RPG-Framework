@@ -2,7 +2,15 @@
 name = "extensible_rpg_framework"
 version = "0.1.0"
 edition = "2024"
+# Oldest compiler that builds this crate. `app/mod.rs` uses `if let`
+# chains (`if let ... && ...`), stable since Rust 1.88 in the 2024
+# edition. Cargo refuses older compilers with a clear message.
+rust-version = "1.88"
+description = "Terminal tool for generating RPG content from seeds"
+publish = false # never upload to crates.io by accident
 
 [dependencies]
+# Terminal input/output: raw mode, key events, cursor control.
 crossterm = "0.29.0"
+# Widgets and layout drawn on top of crossterm.
 ratatui = "0.30.2"

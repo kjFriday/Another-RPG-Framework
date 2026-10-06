@@ -1,0 +1,9 @@
+# rustfmt settings. `cargo fmt` picks this file up automatically.
+#
+# max_width: rustfmt keeps code lines at or under 80 columns.
+#   It does NOT re-wrap comments on stable Rust (that option,
+#   `wrap_comments`, is nightly-only), so comments are wrapped by hand.
+# hard_tabs: indent with tab characters. rustfmt counts each tab
+#   as `tab_spaces` columns, which defaults to 4.
+max_width = 80
+hard_tabs = true
